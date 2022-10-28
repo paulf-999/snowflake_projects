@@ -1,0 +1,15 @@
+!SET variable_substitution=true;
+/*
+USE ROLE ACCOUNTADMIN;
+USE WAREHOUSE &{PROGRAM}_DEVELOPER_WH;
+DROP DATABASE IF EXISTS &{PROGRAM}_ANALYTICS_DB;
+*/
+
+USE ROLE &{PROGRAM}_DBA;
+USE WAREHOUSE &{PROGRAM}_DEVELOPER_WH;
+
+--create analytics_db structure
+CREATE DATABASE IF NOT EXISTS &{PROGRAM}_ANALYTICS_DB COMMENT = 'Application layer, where business logic has been applied allowing for the data to be ready for Tableau';
+--CREATE SCHEMA IF NOT EXISTS &{PROGRAM}_ANALYTICS_DB.UTILITIES WITH MANAGED ACCESS COMMENT = 'Contains all database objects other than tables or views';
+--CREATE SCHEMA IF NOT EXISTS &{PROGRAM}_ANALYTICS_DB.STG WITH MANAGED ACCESS COMMENT = 'Used to store staging tables';
+DROP SCHEMA IF EXISTS &{PROGRAM}_ANALYTICS_DB.PUBLIC;
