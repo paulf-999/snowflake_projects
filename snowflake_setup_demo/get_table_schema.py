@@ -51,16 +51,24 @@ def main():
     )
 
     cursor = conn.cursor()
-    query = "SELECT current_version()"
+    # query = "SELECT current_version()"
+    query = "desc table products;"
 
-    try:
-        cursor.execute(query)
-        one_row = cursor.fetchone()
-        logger.info(f"\nSnowflake version = {one_row[0]}\n")
-    finally:
-        cursor.close()
+    with open("query_op.txt", "w") as query_op:
 
-    conn.close()
+        try:
+            cursor.execute(query)
+            # one_row = cursor.fetchone()
+            query_result = cursor.fetchall()
+            for tuple_result in query_result:
+                logger.info(f"{str(tuple_result)}")
+                for column in tuple_result:
+                    query_op.write(f"{column},")
+                query_op.write("\n")
+        finally:
+            cursor.close()
+
+        conn.close()
 
     return
 
