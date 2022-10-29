@@ -1,0 +1,40 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: >
+  S3 bucket policy template, to allow comms from Snowflake
+
+Parameters:
+  S3BucketName:
+    Type: String
+  VPCID:
+    Type: String
+
+Resources:
+  S3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref S3BucketName
+      PolicyDocument:
+        Version: '2012-10-17'
+        Id: BucketPolicy
+        Statement:
+          - Sid: AllowSSLRequestsOnly
+            Effect: Deny
+            Principal: "*"
+            Action: s3:*
+            Resource:
+              - Fn::Sub: arn:aws:s3:::${S3BucketName}
+              - Fn::Sub: arn:aws:s3:::${S3BucketName}/*
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+          - Sid: AccessToSpecificVPCOnly
+            Effect: Allow
+            Principal: "*"
+            Action: s3:*
+            Resource:
+              - Fn::Sub: arn:aws:s3:::${S3BucketName}
+              - Fn::Sub: arn:aws:s3:::${S3BucketName}/*
+            Condition:
+              StringEquals:
+                aws:SourceVpc: !Sub '${VPCID}'

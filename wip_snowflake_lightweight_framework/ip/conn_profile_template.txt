@@ -1,0 +1,7 @@
+
+[connections.%program]
+accountname = %sf_acc_name
+username = %sf_username
+password = %sf_pass
+database = %program_raw_db
+warehouse = %program_developer_wh

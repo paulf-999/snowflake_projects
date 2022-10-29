@@ -1,0 +1,37 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: >
+  IAM role to allow comms from Snowflake
+
+Parameters:
+  IAMRoleName:
+    Type: String
+  SnowflakeUserARN:
+    Type: String
+  SnowflakeExternalID:
+    Type: String
+
+Resources:
+  IAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref IAMRoleName
+      Description: IAM role used to allow comms between Snowflake and AWS
+      AssumeRolePolicyDocument: {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Sid": "",
+            "Effect": "Allow",
+            "Principal": {
+              "AWS": !Ref SnowflakeUserARN
+            },
+            "Action": "sts:AssumeRole",
+            "Condition": {
+              "StringEquals": {
+                "sts:ExternalId": !Ref SnowflakeExternalID
+              }
+            }
+          }
+        ]
+      }

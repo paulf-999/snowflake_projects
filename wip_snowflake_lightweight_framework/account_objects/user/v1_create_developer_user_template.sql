@@ -1,0 +1,10 @@
+!SET variable_substitution=true;
+USE ROLE SECURITYADMIN;
+
+CREATE USER IF NOT EXISTS EG_DEVELOPER_USER
+    LOGIN_NAME = 'firstname.lastname'
+    PASSWORD = '[tmp-pass-here]'
+    DISPLAY_NAME = 'Eg Developer User'
+    DEFAULT_ROLE = SYSADMIN
+    DEFAULT_WAREHOUSE = ${PROGRAM}_${ENV}_DEVELOPER_WH
+    MUST_CHANGE_PASSWORD = TRUE;

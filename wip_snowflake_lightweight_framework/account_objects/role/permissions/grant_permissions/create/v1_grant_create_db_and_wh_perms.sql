@@ -1,0 +1,5 @@
+!SET variable_substitution=true;
+--give base privileges to the &{PROGRAM}_&{ENV}_DBA roles
+USE ROLE SYSADMIN;
+GRANT CREATE DATABASE ON ACCOUNT TO ROLE &{PROGRAM}_&{ENV}_DBA;
+GRANT CREATE WAREHOUSE ON ACCOUNT TO ROLE &{PROGRAM}_&{ENV}_DBA;

@@ -2,11 +2,11 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.2.0
+    rev: v4.3.0
     hooks:
     -   id: check-added-large-files # prevents giant files from being committed.
     -   id: check-json # checks json files for parseable syntax.
-    -   id: check-yaml # checks yaml files for parseable syntax.
+    # -   id: check-yaml # checks yaml files for parseable syntax.
     -   id: check-merge-conflict # checks for files that contain merge conflict strings.
     -   id: debug-statements # checks for debugger imports and py37+ `breakpoint()` calls in python source.
     -   id: end-of-file-fixer # ensures that a file is either empty, or ends with one newline.
@@ -15,19 +15,19 @@ repos:
         language_version: python3
 
 -   repo: https://github.com/PyCQA/flake8
-    rev: 3.9.2
+    rev: 5.0.4
     hooks:
     -   id: flake8 # enforces flake8 style consistency across Python projects.
         language_version: python3
         args: [--max-line-length=150, --max-complexity=10]
 
 -   repo: https://github.com/asottile/reorder_python_imports
-    rev: v2.6.0
+    rev: v3.9.0
     hooks:
     -   id: reorder-python-imports # This hook reorders imports in python files.
 
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v2.29.0
+    rev: v3.1.0
     hooks:
     -   id: pyupgrade # Automatically upgrade syntax for newer versions
         args: [--py36-plus]
@@ -40,11 +40,17 @@ repos:
 #        args: [--dialect, "snowflake"]
 #        additional_dependencies: ['dbt-snowflake', 'sqlfluff-templater-dbt']
 #        # files: 'TODO'
-#
--   repo: https://github.com/jumanjihouse/pre-commit-hooks
-    rev: 3.0.0
+
+#-   repo: https://github.com/jumanjihouse/pre-commit-hooks
+#    rev: 3.0.0
+#    hooks:
+#    -   id: markdownlint # Lint .md files - configure in .markdownlint.rb
+#        args: [-s, .markdownlint.rb]
+#    -   id: shellcheck # Ensure shell scripts conform to shellcheck
+#    -   id: shfmt # Check shell style with shfmt
+
+-   repo: https://github.com/aws-cloudformation/cfn-lint
+    rev: v0.69.1  # The version of cfn-lint to use
     hooks:
-    -   id: markdownlint # Lint .md files - configure in .markdownlint.rb
-        args: [-s, .markdownlint.rb]
-    -   id: shellcheck # Ensure shell scripts conform to shellcheck
-    -   id: shfmt # Check shell style with shfmt
+    -   id: cfn-python-lint # linter for cfn (yaml) templates
+        files: path/to/cfn/dir/.*\.(json|yml|yaml)$
