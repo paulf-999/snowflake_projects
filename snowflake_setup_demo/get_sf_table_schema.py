@@ -54,7 +54,7 @@ def main():
     # query = "SELECT current_version()"
     query = "desc table products;"
 
-    with open("query_op.txt", "w") as query_op:
+    with open("query_op.csv", "w") as query_op:
 
         try:
             cursor.execute(query)
@@ -63,7 +63,7 @@ def main():
             for tuple_result in query_result:
                 logger.info(f"{str(tuple_result)}")
                 for column in tuple_result:
-                    query_op.write(f"{column},")
+                    query_op.write(f"{column};")
                 query_op.write("\n")
         finally:
             cursor.close()
