@@ -42,3 +42,6 @@ pids
 *.pid
 
 config_mine.yaml
+
+# dev-version of input config file
+config_mine.yaml

@@ -17,9 +17,6 @@ $(eval sf_pass=$(shell jq '.Parameters.SnowflakeParams.sf_pass' ${config_file}))
 
 snowsql_query=snowsql -c ${sf_conn_profile} -o friendly=false -o header=false -o timing=false
 
-beep:
-	${snowsql_query}
-
 installations: deps install clean
 
 deps:
