@@ -73,9 +73,9 @@ load_ip_data:
 	@${snowsql_query} -f database_objects/raw_db/stage/v1_bikestores_stage.sql --variable PROGRAM=${program_upper}
 
 	# upload the files
-	@${snowsql_query} -f data_loading/upload_data.sql --variable PROGRAM=${program}
-	@${snowsql_query} -f data_loading/insert_data_into_raw_production_tbls.sql --variable PROGRAM=${program}
-	@${snowsql_query} -f data_loading/insert_data_into_raw_sales_tbls.sql --variable PROGRAM=${program}
+	@${snowsql_query} -f data_ingestion_scripts/upload_data.sql --variable PROGRAM=${program}
+	@${snowsql_query} -f data_ingestion_scripts/insert_data_into_raw_production_tbls.sql --variable PROGRAM=${program}
+	@${snowsql_query} -f data_ingestion_scripts/insert_data_into_raw_sales_tbls.sql --variable PROGRAM=${program}
 
 gen_fake_data:
 	python3 py/gen_fake_data.py

@@ -4,7 +4,7 @@ dialect = snowflake
 templater = jinja
 sql_file_exts = .sql,.sql.j2,.dml,.ddl
 # allow aliasing in from clauses and join conditions.
-# exclude_rules = L031
+exclude_rules = L031
 
 [sqlfluff:indentation]
 indented_joins = true
