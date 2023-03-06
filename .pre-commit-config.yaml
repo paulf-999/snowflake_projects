@@ -12,7 +12,7 @@ repos:
       - id: check-ast  # checks whether files parse as valid python.
       - id: check-json  # checks json files for parseable syntax.
       - id: pretty-format-json  # verifies all your JSON files are pretty. "Pretty" means keys are sorted & indented.
-      - id: check-yaml  # checks yaml files for parseable syntax.
+      # - id: check-yaml  # checks yaml files for parseable syntax.
       - id: sort-simple-yaml  # sorts simple YAML files, preserving comments and blocks.
       - id: no-commit-to-branch  # Protect specific branches from direct check-ins
         args: ['--pattern', 'release/.*']
@@ -66,3 +66,9 @@ repos:
         args: [-s, .markdownlint.rb]
       - id: shellcheck  # Ensure shell scripts conform to shellcheck
       - id: shfmt  # Check shell style with shfmt
+
+  - repo: https://github.com/aws-cloudformation/cfn-lint
+    rev: v0.69.1  # The version of cfn-lint to use
+    hooks:
+      - id: cfn-python-lint # linter for cfn (yaml) templates
+        files: wip_snowflake_lightweight_framework_aws/cfn/.*\.(json|yml|yaml)$

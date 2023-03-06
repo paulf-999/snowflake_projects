@@ -80,10 +80,10 @@ create_snowflake_account_objs:
 establish_sf_s3_connectivity:
 	$(info [+] Establish connectivity between specified S3 buckets and Snowflake)
 	@[ "${sf_conn_profile}" ] || ( echo "\nError: sf_conn_profile variable is not set\n"; exit 1 )
-	cd ../build/snowflake-s3-connectivity/ && make -f setup_sf_connectivity.mk update_s3_bucket_policies config_file=${config_file}
-	cd ../build/snowflake-s3-connectivity/ && make -f setup_sf_connectivity.mk create_tmp_snowflake_iam_role config_file=${config_file}
-	cd ../build/snowflake-s3-connectivity/ && make -f setup_sf_connectivity.mk create_sf_storage_int_obj config_file=${config_file}
-	cd ../build/snowflake-s3-connectivity/ && make -f setup_sf_connectivity.mk create_snowflake_iam_role config_file=${config_file}
+	make -f setup_sf_connectivity.mk update_s3_bucket_policies config_file=${config_file}
+	make -f setup_sf_connectivity.mk create_tmp_snowflake_iam_role config_file=${config_file}
+	make -f setup_sf_connectivity.mk create_sf_storage_int_obj config_file=${config_file}
+	make -f setup_sf_connectivity.mk create_snowflake_iam_role config_file=${config_file}
 
 create_snowflake_raw_db_objs:
 	$(info [+] Create the snowflake RAW db objects)
