@@ -24,9 +24,9 @@ def get_table_schema(input_tbl):
     conn = create_snowflake_connection()
     cursor = conn.cursor()
 
-    query = f"DESC table {input_tbl};"
+    query = f'DESC table {input_tbl};'
 
-    with open(f"tmp/table_schemas/{input_tbl}.csv", "w") as query_op:
+    with open(f'tmp/table_schemas/{input_tbl}.csv', 'w') as query_op:
 
         try:
             cursor.execute(query)
@@ -34,9 +34,9 @@ def get_table_schema(input_tbl):
             for tuple_result in query_result:
 
                 for column in tuple_result:
-                    query_op.write(f"{column};")
+                    query_op.write(f'{column};')
 
-                query_op.write("\n")
+                query_op.write('\n')
         finally:
             cursor.close()
 

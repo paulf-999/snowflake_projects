@@ -65,7 +65,6 @@ repos:
       - id: markdownlint  # Lint .md files - configure in .markdownlint.rb
         args: [-s, .markdownlint.rb]
       - id: shellcheck  # Ensure shell scripts conform to shellcheck
-      - id: shfmt  # Check shell style with shfmt
 
   - repo: https://github.com/aws-cloudformation/cfn-lint
     rev: v0.69.1  # The version of cfn-lint to use

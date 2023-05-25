@@ -78,4 +78,4 @@ load_ip_data:
 	@${snowsql_query} -f data_ingestion_scripts/insert_data_into_raw_sales_tbls.sql --variable PROGRAM=${program}
 
 gen_fake_data:
-	python3 py/gen_fake_data.py
+	python3 src/py/gen_fake_data.py
