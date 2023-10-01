@@ -1,2 +1,3 @@
 snowflake-connector-python==2.8.1
-schemachange
+schemachange==3.5.3
+j2cli==0.3.10

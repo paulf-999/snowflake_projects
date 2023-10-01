@@ -1,0 +1,224 @@
+---
+variables:
+    AZURE_KEY_VAULT_NAME: dmt-uat-uscn-oos-kv  # Azure Key Vault name
+    CICD_FILES_DIR: dmt-scripts-snowflake/src/cicd  # filepath to where the CICD files are stored within the git repo
+    # the source branch from the Git PR (pull request)
+    SOURCE_GIT_BRANCH_NAME: $[replace(variables['System.PullRequest.SourceBranch'], 'refs/heads/', '')]
+    TARGET_GIT_BRANCH_NAME: $[replace(variables['System.PullRequest.TargetBranch'], 'refs/heads/', '')]
+    # Snowflake variables
+    # TODO - confirm what database should be used
+    SNOWFLAKE_ROLE: CICD_ALL_ROLE
+    SNOWFLAKE_WAREHOUSE: DEV_WH
+    SNOWFLAKE_DB: PF_POC_SCHEMACHANGE_DB
+    SNOWFLAKE_SCHEMA: SCHEMACHANGE
+    CHANGE_HISTORY_TBL_NAME: CHANGE_HISTORY
+
+# some actions should take place on receipt of a PR being raised, e.g., the '--dry-run' of the schemachange job
+pr:
+    branches:
+        include:
+            - main
+            - develop
+    # Also only trigger the CI job when changes are made to the following directories/files
+    paths:
+        include:
+            - schemachange/*
+
+# Whereas some actions should only be triggered once the code has been merged to the target branch.
+# E.g., the actual running of the schemachange job (i.e., not a dry-run)
+trigger:
+    branches:
+        include:
+            - '*'
+    paths:
+        include:
+            - schemachange/*
+
+pool: onprem-linux-elksdx
+
+jobs:
+    #=========================================================================================================================================
+    # Job 1: Perform a dry-run of using schemachange, to verify if a new Snowflake object can be version controlled.
+    #=========================================================================================================================================
+    - job: schemaChangeDryRun
+      displayName: Execute dry-run of schemachange
+      # Condition: Only trigger this job when:
+      # 1. A PR (pull request) is raised to either the develop or main branch
+      # 2. A code change is made to files within the child directories of 'schemachange'
+      condition: |
+          and(
+              eq(variables['Build.Reason'], 'PullRequest'),
+              or(
+                  eq(variables['System.PullRequest.TargetBranch'], 'develop'),
+                  eq(variables['System.PullRequest.TargetBranch'], 'main')
+              ),
+              or(
+                  contains(variables['Build.SourceBranch'], 'refs/pull/'),
+                  and(
+                      in(variables['Build.SourceBranch'], 'refs/heads/develop', 'refs/heads/main'),
+                      or(
+                          contains(variables['Build.SourceTfvcShelveset'], 'schemachange/1_users_roles_and_grants/'),
+                          contains(variables['Build.SourceTfvcShelveset'], 'schemachange/2_account_level_objects/'),
+                          contains(variables['Build.SourceTfvcShelveset'], 'schemachange/3_schema_level_objects/')
+                      )
+                  )
+              ),
+              ne(variables['Build.Reason'], 'IndividualCI')
+          )
+      steps:
+          # Step 1: Checkout the branch
+          - checkout: self # Check out the existing Git repository
+            clean: true # delete any local branches created & undo and git config changes
+            displayName: Git checkout
+          #- script: |
+          #      ls -la
+          #      # read in shared variables from a separate shell script (better code readability)
+          #      source src/cicd/supporting_scripts/common_vars_cicd_scripts.sh
+          #      #=======================================================================
+          #      # Main script logic
+          #      #=======================================================================
+          #      # read in script to output date/time of script execution
+          #      source src/cicd/supporting_scripts/date_time_scr_execution.sh
+          #      rm -rf /usr/local/lib/python3.8/dist-packages/OpenSSL && rm -rf /usr/local/lib/python3.8/dist-packages/pyOpenSSL-22.1.0.dist-info/
+          #      pip install --upgrade pyOpenSSL
+          #      pip install -r src/cicd/supporting_scripts/requirements.txt
+          #  displayName: Prep step for CICD job (to be removed in future)
+          - task: Bash@3
+            inputs:
+                filePath: $(CICD_FILES_DIR)/supporting_scripts/cicd_job_prep_steps.sh
+            displayName: Prep step for CICD job (to be removed in future)
+          #--------------------------------------------------------------------------------------------------------------------------------------
+          # Step 1: Connect to Azure Key Vault (KV) and fetch the Vault secrets we're interested in
+          #--------------------------------------------------------------------------------------------------------------------------------------
+          - task: AzureKeyVault@2
+            inputs:
+                azureSubscription: pyrc-uat-oos-sb
+                KeyVaultName: $(AZURE_KEY_VAULT_NAME)
+                SecretsFilter: '*'
+                RunAsPreJob: true
+            displayName: AZ Key Vault - Retrieve Secrets
+          #--------------------------------------------------------------------------------------------------------------------------------------
+          # Step 2: Run the schemachange tool
+          #--------------------------------------------------------------------------------------------------------------------------------------
+          # TODO - append 'develop' to ${CHANGE_HISTORY_TBL_NAME} when merging to the develop branch
+          - script: cd dmt-scripts-snowflake && schemachange -f schemachange -a ${SNOWFLAKE_ACCOUNT} -u ${SNOWFLAKE_USERNAME} -r ${SNOWFLAKE_ROLE} -w ${SNOWFLAKE_WAREHOUSE}
+                -d ${SNOWFLAKE_DB} -c ${SNOWFLAKE_DB}.SCHEMACHANGE.CHANGE_HISTORY --create-change-history-table --dry-run
+            displayName: = Schemachange - dry-run
+            env:
+                SNOWFLAKE_ACCOUNT: $(SNOWFLAKE-ACCOUNT-NAME)
+                SNOWFLAKE_USERNAME: $(SNOWFLAKE-CICD-USERNAME)
+                SNOWFLAKE_PASSWORD: $(SNOWFLAKE-CICD-PASSWORD)
+                SNOWFLAKE_ROLE: CICD_ALL_ROLE
+                SNOWFLAKE_WAREHOUSE: DEV_WH
+                SNOWFLAKE_DB: PF_POC_SCHEMACHANGE_DB
+          #--------------------------------------------------------------------------------------------------------------------------------------
+          # Step 3: Checkout the branch
+          #--------------------------------------------------------------------------------------------------------------------------------------
+          - checkout: self # Check out the existing Git repository
+            persistCredentials: true # Pass in the user's Git credentials
+            clean: true # deletes any local branches created & undoes and git config changes
+            displayName: Git checkout
+          #--------------------------------------------------------------------------------------------------------------------------------------
+          # Step 4: Update the latest version of the changeset
+          #--------------------------------------------------------------------------------------------------------------------------------------
+          - task: Bash@3
+            inputs:
+                filePath: $(CICD_FILES_DIR)/supporting_scripts/update_current_changeset_version.sh
+            displayName: = Update changeset version = (see src/cicd/supporting_scripts/update_current_changeset_version.sh)
+    #=========================================================================================================================================
+    # Job 2: Use the 'schemachange' tool to make use of version control to conditionally created/amend Snowflake objects
+    #=========================================================================================================================================
+    - job: schemaChangeExecute
+      displayName: Execute schemachange - only run on merge to develop/main branches
+      # Condition: Only run this job when code is merged into the 'develop' or 'main' branch
+      condition: |
+          or(
+            startsWith(variables['Build.SourceBranch'], 'refs/heads/develop'),
+            startsWith(variables['Build.SourceBranch'], 'refs/heads/main')
+          )
+      steps:
+          # Step 1: Checkout the branch
+          - checkout: self # Check out the existing Git repository
+            clean: true # delete any local branches created & undo and git config changes
+            displayName: Git checkout
+          - script: |
+                ls -la
+                # read in shared variables from a separate shell script (better code readability)
+                source src/cicd/supporting_scripts/common_vars_cicd_scripts.sh
+                #=======================================================================
+                # Main script logic
+                #=======================================================================
+                # read in script to output date/time of script execution
+                source src/cicd/supporting_scripts/date_time_scr_execution.sh
+                rm -rf /usr/local/lib/python3.8/dist-packages/OpenSSL && rm -rf /usr/local/lib/python3.8/dist-packages/pyOpenSSL-22.1.0.dist-info/
+                pip install --upgrade pyOpenSSL
+                pip install -r src/cicd/supporting_scripts/requirements.txt -q
+            displayName: Prep step for CICD job (to be removed in future)
+          #- task: Bash@3
+          #  inputs:
+          #      filePath: $(CICD_FILES_DIR)/supporting_scripts/cicd_job_prep_steps.sh
+          #      arguments: $(SOURCE_GIT_BRANCH_NAME) $(TARGET_GIT_BRANCH_NAME)
+          #  displayName: Prep step for CICD job (to be removed in future)
+          #--------------------------------------------------------------------------------------------------------------------------------------
+          # Step 1: Connect to Azure Key Vault (KV) and fetch the Vault secrets we're interested in
+          #--------------------------------------------------------------------------------------------------------------------------------------
+          - task: AzureKeyVault@2
+            inputs:
+                azureSubscription: pyrc-uat-oos-sb
+                KeyVaultName: $(AZURE_KEY_VAULT_NAME)
+                SecretsFilter: '*'
+                RunAsPreJob: true
+            displayName: AZ Key Vault - Retrieve Secrets
+          #--------------------------------------------------------------------------------------------------------------------------------------
+          # Step 2: Run the schemachange tool
+          #--------------------------------------------------------------------------------------------------------------------------------------
+          - script: schemachange -f schemachange -a ${SNOWFLAKE_ACCOUNT} -u ${SNOWFLAKE_USERNAME} -r ${SNOWFLAKE_ROLE} -w ${SNOWFLAKE_WAREHOUSE} -d ${SNOWFLAKE_DB}
+                -c ${SNOWFLAKE_DB}.${SNOWFLAKE_SCHEMA}.${CHANGE_HISTORY_TBL_NAME} --create-change-history-table
+            displayName: = schemachange - execute =
+            env:
+                SNOWFLAKE_ACCOUNT: $(SNOWFLAKE-ACCOUNT-NAME)
+                SNOWFLAKE_USERNAME: $(SNOWFLAKE-CICD-USERNAME)
+                SNOWFLAKE_PASSWORD: $(SNOWFLAKE-CICD-PASSWORD)
+                SNOWFLAKE_ROLE: $(SNOWFLAKE_ROLE)
+                SNOWFLAKE_WAREHOUSE: $(SNOWFLAKE_WAREHOUSE)
+                SNOWFLAKE_DB: $(SNOWFLAKE_DB)
+                SNOWFLAKE_SCHEMA: $(SNOWFLAKE_SCHEMA)
+    #=========================================================================================================================================
+    # Job 3: Git - validate branch name
+    # Ensure the Git branch name follows the naming standard (i.e., uses underscores & not hyphens) - ^(feature|hotfix|release)\/[a-z0-9_]+$
+    #=========================================================================================================================================
+    #- job: validateGitBranchName
+    #  # Condition: only run this job when a Pull Request is raised
+    #  condition: eq(variables['Build.Reason'], 'PullRequest')
+    #  displayName: Git - validate branch name - only run on PR to the develop/main branches
+    #  steps:
+    #      - task: Bash@3
+    #        inputs:
+    #            filePath: $(CICD_FILES_DIR)/git_validate_branch_name.sh
+    #            arguments: $(SOURCE_GIT_BRANCH_NAME)
+    #        displayName: = Git - validate branch name = (see src/cicd/git_validate_branch_name.sh)
+    ##=========================================================================================================================================
+    ## Job 4: Git - validate the number of changed files
+    ## Ensure the number of files committed does not exceed the max (20).
+    ##=========================================================================================================================================
+    #- job: validateNoOfChangedFiles
+    #  # Condition: only run this job when a Pull Request is raised
+    #  condition: eq(variables['Build.Reason'], 'PullRequest')
+    #  displayName: Git - validate the number of changed files - only run on PR to the develop/main branches
+    #  steps:
+    #      - task: Bash@3
+    #        inputs:
+    #            filePath: $(CICD_FILES_DIR)/git_validate_num_file_changes.sh
+    #            arguments: $(SOURCE_GIT_BRANCH_NAME)
+    #        displayName: = Git - validate the number of file changes = (see src/cicd/git_validate_num_file_changes.sh)
+    #=========================================================================================================================================
+    # Ignore - placeholder debugging job
+    #=========================================================================================================================================
+    # - job: debugging
+    #   displayName: Debugging - print CICD job variables
+    #   steps:
+    #       - task: Bash@3
+    #         inputs:
+    #             targetType: inline
+    #             script: env | sort
+    #         displayName: List all predefined AZ pipeline vars

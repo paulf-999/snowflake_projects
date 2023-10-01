@@ -1,38 +1,29 @@
 #!/usr/bin/env bash
 
-# 1. create account_object dirs
-mkdir account_objects
-mkdir account_objects/database
-mkdir account_objects/ext_function
-mkdir account_objects/resource_monitor
-mkdir account_objects/role
-mkdir account_objects/user
-mkdir account_objects/warehouse
+PARENT_DIR="schemachange"
 
-# 2. create placeholder files
-touch account_objects/database/.gitkeep
-touch account_objects/ext_function/.gitkeep
-touch account_objects/resource_monitor/.gitkeep
-touch account_objects/role/.gitkeep
-touch account_objects/user/.gitkeep
-touch account_objects/warehouse/.gitkeep
+# 1. Create parent dir
+mkdir ${PARENT_DIR}
 
-# 3. create database_objects dirs
-mkdir database_objects
-mkdir database_objects/ext_table
-mkdir database_objects/file_format
-mkdir database_objects/materialized_view
-mkdir database_objects/sp
-mkdir database_objects/stage
-mkdir database_objects/table
-mkdir database_objects/task
+mkdir ${PARENT_DIR}/1_users_roles_and_grants
+touch ${PARENT_DIR}/1_users_roles_and_grants/.gitkeep
+mkdir ${PARENT_DIR}/2_account_level_objects
+touch ${PARENT_DIR}/2_account_level_objects/.gitkeep
+mkdir ${PARENT_DIR}/3_schema_level_objects
+touch ${PARENT_DIR}/3_schema_level_objects/.gitkeep
+mkdir ${PARENT_DIR}/img
+touch ${PARENT_DIR}/img/.gitkeep
 
-# 4. create placeholder files
-touch database_objects/.gitkeep
-touch database_objects/ext_table/.gitkeep
-touch database_objects/file_format/.gitkeep
-touch database_objects/materialized_view/.gitkeep
-touch database_objects/sp/.gitkeep
-touch database_objects/stage/.gitkeep
-touch database_objects/table/.gitkeep
-touch database_objects/task/.gitkeep
+# 2. Create dirs for 'grants' dir
+mkdir ${PARENT_DIR}/1_users_roles_and_grants/grants/
+touch ${PARENT_DIR}/1_users_roles_and_grants/grants/.gitkeep
+
+# 3. Create dirs for '2_account_level_objects'
+mkdir ${PARENT_DIR}/2_account_level_objects/database
+mkdir ${PARENT_DIR}/2_account_level_objects/warehouse
+touch ${PARENT_DIR}/2_account_level_objects/database/.gitkeep
+touch ${PARENT_DIR}/2_account_level_objects/warehouse/.gitkeep
+
+# 4. Create dirs for '3_schema_level_objects'
+mkdir ${PARENT_DIR}/3_schema_level_objects/sp
+touch ${PARENT_DIR}/3_schema_level_objects/sp/.gitkeep

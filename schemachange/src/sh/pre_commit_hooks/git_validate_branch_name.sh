@@ -24,7 +24,6 @@ VALID_GIT_BRANCH_NAME="^(feature|hotfix|release)\/[a-z0-9_]+$"
 # setup colour formatting
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
 COLOUR_OFF='\033[0m' # Text Reset
 
 #=======================================================================

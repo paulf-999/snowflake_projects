@@ -1,0 +1,5 @@
+schemachange==3.5.3
+# The two libraries that can create conflict issues with Snowflake/dbt. Use these versions
+# See https://stackoverflow.com/questions/73849455/dbt-install-snowflake-fails-with-cryptography-and-markupsafe-being-outdated
+cryptography==36.0.2  # try 38.0.4 if you run into any issues
+pyOpenSSL==20.0.1  # try 22.0.0 if you run into any issues
